@@ -1,8 +1,8 @@
-import { PrismaClient } from "@prisma/client/edge";
+import { PrismaClient } from "@prisma/client";
 import { withAccelerate } from "@prisma/extension-accelerate";
 import { Hono } from "hono";
-import { sign } from "hono/jwt";
-import { signinInput, signupInput } from "@100xdevs/medium-common"
+import { sign, verify } from "hono/jwt";
+import { signinInput, signupInput } from "@instructiveagonizing/medium-common"
 
 export const userRouter = new Hono<{
   Bindings: {
@@ -11,11 +11,43 @@ export const userRouter = new Hono<{
   }
 }>();
 
+userRouter.get('/me', async (c) => {
+  const authHeader = c.req.header("authorization") || "";
+  try {
+    const token = authHeader.replace("Bearer ", "").trim();
+    const payload = await verify(token, c.env.JWT_SECRET, 'HS256');
+    const prisma = new PrismaClient({
+      accelerateUrl: c.env.DATABASE_URL,
+    }).$extends(withAccelerate());
+
+    const user = await prisma.user.findUnique({
+      where: {
+        id: Number(payload.id)
+      },
+      select: {
+        id: true,
+        username: true,
+        name: true
+      }
+    });
+
+    if (!user) {
+      c.status(404);
+      return c.json({ message: "User not found" });
+    }
+
+    return c.json({ user });
+  } catch (e) {
+    c.status(403);
+    return c.json({ message: "Not logged in" });
+  }
+});
+
 userRouter.post('/signup', async (c) => {
 
-  const prisma = new PrismaClient({
-    datasourceUrl: c.env.DATABASE_URL,
-  }).$extends(withAccelerate());
+    const prisma = new PrismaClient({
+      accelerateUrl: c.env.DATABASE_URL,
+    }).$extends(withAccelerate());
   const body = await c.req.json();
   const { success } = signupInput.safeParse(body);
 
@@ -53,9 +85,9 @@ userRouter.post('/signup', async (c) => {
 
 })
 userRouter.post('/signin', async (c) => {
-  const prisma = new PrismaClient({
-    datasourceUrl: c.env.DATABASE_URL,
-  }).$extends(withAccelerate());
+    const prisma = new PrismaClient({
+      accelerateUrl: c.env.DATABASE_URL,
+    }).$extends(withAccelerate());
   const body = await c.req.json();
   const { success } = signinInput.safeParse(body);
   try {
@@ -77,8 +109,10 @@ userRouter.post('/signin', async (c) => {
       return c.text('email/password is wrong')
     }
     const jwt = await sign({ id: user.id }, c.env.JWT_SECRET);
+    console.log("Where are the horses: " + c.env.JWT_SECRET);
+    console.log(jwt);
+    return c.json(jwt );
 
-    return c.json({ jwt });
   }
   catch (e) {
 

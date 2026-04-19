@@ -5,22 +5,45 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model User {
-  id  Int    @id @default(autoincrement())
-  name    String?
+  id       Int    @id @default(autoincrement())
+  name     String?
   username String @unique
   password String
   blogs    Blog[]
+  likes    Like[]
 }
 
 model Blog {
-  id  Int    @id @default(autoincrement())
-  authorId   Int
-  content    String
+  id          Int      @id @default(autoincrement())
+  authorId    Int
+  content     String
   title       String
-  published Boolean  @default(false)
-  author    User @relation(fields: [authorId], references: [id])
+  description String?
+  thumbnail   String?
+  published   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  author      User     @relation(fields: [authorId], references: [id])
+  likes       Like[]
+  categoryId  Int?
+  category    Category? @relation(fields: [categoryId], references: [id])
+}
+
+model Like {
+  id     Int  @id @default(autoincrement())
+  userId Int
+  blogId Int
+  user   User @relation(fields: [userId], references: [id])
+  blog   Blog @relation(fields: [blogId], references: [id])
+
+  @@unique([userId, blogId])
+}
+
+model Category {
+  id    Int    @id @default(autoincrement())
+  name  String @unique
+  blogs Blog[]
 }

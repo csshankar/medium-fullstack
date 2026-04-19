@@ -1,19 +1,20 @@
 {
   "name": "backend",
+  "type": "module",
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy --minify"
   },
   "dependencies": {
     "@100xdevs/medium-common": "^1.0.0",
-    "@instructiveagonizing/medium-common": "^1.0.0",
-    "@prisma/client": "^5.22.0",
-    "@prisma/extension-accelerate": "^1.2.1",
-    "hono": "^4.6.8"
+    "@instructiveagonizing/medium-common": "file:../common",
+    "@prisma/client": "^7.7.0",
+    "@prisma/extension-accelerate": "^3.0.1",
+    "hono": "^4.12.14"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20241112.0",
-    "prisma": "^5.22.0",
-    "wrangler": "^3.86.0"
+    "@cloudflare/workers-types": "^4.20260418.1",
+    "prisma": "^7.7.0",
+    "wrangler": "^4.83.0"
   }
 }
