@@ -7,3 +7,7 @@ compatibility_flags = [ "nodejs_compat" ]
 DATABASE_URL="prisma://accelerate.prisma-data.net/?api_key=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhcGlfa2V5IjoiNTAzZDVhYTQtNmJlMS00ZDZmLWFkNDItMTYwODBjYzNkYTY5IiwidGVuYW50X2lkIjoiMjAzN2E5MjIxYmIwNDRiZTIwZjMxNDBhNGQxNGY5OWI3YzZiMjFmNGEyMjMwOWY0ZmJlYzVmNDlmNTUxNGU0MSIsImludGVybmFsX3NlY3JldCI6IjAyYTE4NGQ1LWIyNTUtNGJmOS1hNGQxLTFlY2I0N2E1ZGYzOCJ9.puuhgfFvHnjuI5HT_TTzRHo-JwAVnkpqw03KMTYouAw"
 
 JWT_SECRET ="T!v#MW>c;jJtsy&#CcV'W#X6Ca'$b,*.@28R4ng+X,qEVqHWnGAcTN:"
+
+[alias]
+".prisma/client/default" = "./node_modules/@prisma/client/default.js"
+".prisma/client/edge" = "./node_modules/@prisma/client/edge.js"

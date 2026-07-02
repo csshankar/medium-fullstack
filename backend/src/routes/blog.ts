@@ -1,8 +1,8 @@
-import { PrismaClient, User } from "@prisma/client";
+import { PrismaClient, User } from "@prisma/client/edge";
 import { withAccelerate } from "@prisma/extension-accelerate";
 import { Hono } from "hono";
 import { verify } from "hono/jwt";
-import { createBlogInput, updateBlogInput } from "@instructiveagonizing/medium-common";
+import { createBlogInput, updateBlogInput } from "@100xdevs/medium-common";
 
 
 
@@ -22,6 +22,33 @@ blogRouter.get('/categories', async (c) => {
   }).$extends(withAccelerate());
   const categories = await prisma.category.findMany();
   return c.json({ categories });
+})
+
+blogRouter.get('/archives', async (c) => {
+  const prisma = new PrismaClient({
+    accelerateUrl: c.env.DATABASE_URL,
+  }).$extends(withAccelerate());
+  try {
+    const dates = await prisma.blog.findMany({
+      select: { createdAt: true },
+      orderBy: { createdAt: 'desc' }
+    });
+    
+    const archivesMap: Record<number, number[]> = {};
+    dates.forEach(d => {
+      const year = d.createdAt.getFullYear();
+      const month = d.createdAt.getMonth() + 1;
+      if (!archivesMap[year]) {
+        archivesMap[year] = [];
+      }
+      if (!archivesMap[year].includes(month)) {
+        archivesMap[year].push(month);
+      }
+    });
+    return c.json({ archives: archivesMap });
+  } catch (e) {
+    return c.json({ error: "Failed to load archives" }, 500);
+  }
 })
 
 blogRouter.use('/*', async (c, next) => {
@@ -168,11 +195,39 @@ blogRouter.get('/bulk', async (c) => {
     const page = parseInt(c.req.query('page') || '1');
     const limit = parseInt(c.req.query('limit') || '10');
     const categoryId = c.req.query('categoryId');
+    const searchQuery = c.req.query('search');
+    const year = c.req.query('year');
+    const month = c.req.query('month');
     const skip = (page - 1) * limit;
 
     const where: any = {};
     if (categoryId) {
       where.categoryId = Number(categoryId);
+    }
+
+    if (searchQuery) {
+      where.OR = [
+        { title: { contains: searchQuery, mode: 'insensitive' } },
+        { description: { contains: searchQuery, mode: 'insensitive' } },
+        { content: { contains: searchQuery, mode: 'insensitive' } }
+      ];
+    }
+
+    if (year) {
+      const parsedYear = Number(year);
+      let startDate = new Date(parsedYear, 0, 1);
+      let endDate = new Date(parsedYear + 1, 0, 1);
+
+      if (month) {
+        const parsedMonth = Number(month) - 1; // 0-indexed in JS Date
+        startDate = new Date(parsedYear, parsedMonth, 1);
+        endDate = new Date(parsedYear, parsedMonth + 1, 1);
+      }
+
+      where.createdAt = {
+        gte: startDate,
+        lt: endDate
+      };
     }
 
     const blogs = await prisma.blog.findMany({
